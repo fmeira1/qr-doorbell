@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+  const ws = new WebSocket(
+    "ws://localhost:8081/ws/7bf66d39-491f-4752-afa4-459309a22b04"
+  );
+
+  ws.onopen = () => console.log("WS conectado");
+  ws.onmessage = e => console.log("MSG:", e.data);
+  ws.onerror = e => console.error("WS error", e);
+</script>
+</body>
+</html>

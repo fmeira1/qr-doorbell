@@ -1,0 +1,297 @@
+/* Variables CSS comunes */
+:root {
+  --bg: #050816;
+  --bg-alt: #0f172a;
+  --accent: #22c55e;
+  --accent-soft: rgba(34, 197, 94, 0.1);
+  --accent-strong: rgba(34, 197, 94, 0.18);
+  --danger: #ef4444;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border-subtle: rgba(148, 163, 184, 0.4);
+  --radius-lg: 18px;
+  --radius-md: 999px;
+  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.75);
+  --shadow-pill: 0 10px 30px rgba(15, 23, 42, 0.65);
+}
+
+/* Reset básico */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  background: radial-gradient(circle at top, #1d2538 0, #050816 52%, #020617 100%);
+  color: var(--text);
+  padding: 24px 16px;
+}
+
+/* Layout containers */
+.shell {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Card común */
+.card {
+  background: linear-gradient(140deg, rgba(15,23,42,0.96), rgba(15,23,42,0.94));
+  border-radius: 24px;
+  padding: 20px 20px 18px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--border-subtle);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -80%;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.04), transparent 50%),
+    radial-gradient(circle at 100% 0%, rgba(34, 197, 94, 0.08), transparent 52%),
+    radial-gradient(circle at 0% 100%, rgba(129, 140, 248, 0.06), transparent 55%);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.card-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header común */
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Botones comunes */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.96);
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.86);
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background 0.08s ease-out, border-color 0.08s ease-out;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(245, 245, 245, 0.85);
+  background: rgba(15, 23, 42, 0.98);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.95);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.95);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: rgba(15, 23, 42, 0.9);
+  border-style: dashed;
+  border-color: rgba(148, 163, 184, 0.7);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+.btn-danger {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.8);
+  background: radial-gradient(circle at top left, rgba(248, 113, 113, 0.25), rgba(15, 23, 42, 0.98));
+}
+
+.btn-sm {
+  padding: 7px 12px;
+  font-size: 0.72rem;
+}
+
+.btn-icon {
+  font-size: 0.9rem;
+}
+
+/* Botón principal (accent) - usado en login, change-password */
+.btn-primary,
+.btn[type="submit"] {
+  background: var(--accent);
+  color: #050816;
+  font-weight: 600;
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn[type="submit"]:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+/* Formularios comunes */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Mensajes de error/success */
+.error-msg {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-top: 12px;
+  text-align: center;
+  min-height: 20px;
+}
+
+.success-msg {
+  color: var(--accent);
+  font-size: 0.9rem;
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* Links */
+.links {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+.nav {
+  margin-bottom: 20px;
+}
+
+.nav a {
+  color: var(--accent);
+  text-decoration: none;
+  margin-right: 16px;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
+/* Badge común */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Tabla común */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Loading/error común */
+.loading {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+}
+
+.hidden {
+  display: none !important;
+}
