@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Seleccionar Departamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+    }
+    .card {
+      padding: 32px 28px;
+    }
+    .card::before {
+      background:
+        radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.04), transparent 50%),
+        radial-gradient(circle at 100% 0%, rgba(34, 197, 94, 0.08), transparent 52%);
+    }
+    .header {
+      margin-bottom: 32px;
+    }
+    .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+    }
+
+    .units-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .unit-btn {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.8);
+    }
+
+    .unit-btn:hover {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.9);
+    }
+
+    .unit-btn:active {
+      transform: translateY(0);
+    }
+
+    .unit-number {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .unit-name {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .error {
+      text-align: center;
+      color: #ef4444;
+      padding: 16px;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-inner">
+        <div class="header">
+          <div class="icon">🏢</div>
+          <h1>Seleccioná el departamento</h1>
+          <p class="subtitle">Elegí a quién querés llamar</p>
+        </div>
+
+        <div id="error" class="error hidden"></div>
+        <div id="loading" class="loading">Cargando departamentos...</div>
+        <div id="units-grid" class="units-grid hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const doorbellId = new URLSearchParams(window.location.search).get('doorbell_id') || 'abc123';
+    const buildingId = new URLSearchParams(window.location.search).get('building_id') || 'building-1';
+
+    async function loadUnits() {
+      try {
+        const res = await fetch(`/units?building_id=${buildingId}`);
+        if (!res.ok) {
+          throw new Error('No se pudieron cargar los departamentos');
+        }
+        const units = await res.json();
+        
+        document.getElementById('loading').classList.add('hidden');
+        const grid = document.getElementById('units-grid');
+        grid.classList.remove('hidden');
+
+        if (units.length === 0) {
+          grid.innerHTML = '<div class="error">No hay departamentos disponibles</div>';
+          return;
+        }
+
+        grid.innerHTML = units.map(unit => `
+          <button class="unit-btn" onclick="selectUnit('${unit.id}', '${unit.number}')">
+            <div class="unit-number">${unit.number}</div>
+            <div class="unit-name">${unit.name || ''}</div>
+          </button>
+        `).join('');
+      } catch (e) {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('error').textContent = 'Error al cargar departamentos. Intentá de nuevo.';
+        document.getElementById('error').classList.remove('hidden');
+      }
+    }
+
+    function selectUnit(unitId, unitNumber) {
+      window.location.href = `index.html?doorbell_id=${doorbellId}&unit_id=${unitId}&unit_number=${encodeURIComponent(unitNumber)}`;
+    }
+
+    loadUnits();
+  </script>
+</body>
+</html>

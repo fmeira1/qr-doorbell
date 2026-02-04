@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Administración - QR Doorbell</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .card {
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.35rem; }
+    .subtitle { margin: 0 0 20px; }
+    .form-group input, .form-group select {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+    .btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <a href="admin.html">Usuarios</a>
+      <a href="change-password.html">Cambiar mi contraseña</a>
+      <a href="index.html">Timbre</a>
+      <a href="#" id="logoutLink">Cerrar sesión</a>
+    </div>
+
+    <div class="card">
+      <h1>➕ Agregar usuario por departamento</h1>
+      <p class="subtitle">Anotá el email con una contraseña genérica; el dueño podrá cambiarla después.</p>
+      <form id="addUserForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required placeholder="dueño@ejemplo.com" />
+          </div>
+          <div class="form-group">
+            <label for="password">Contraseña genérica</label>
+            <input type="password" id="password" required minlength="6" placeholder="••••••••" />
+          </div>
+          <div class="form-group">
+            <label for="unit_id">Departamento</label>
+            <select id="unit_id" required>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn" id="submitBtn">Crear usuario</button>
+      </form>
+      <p class="error-msg" id="formError"></p>
+      <p class="success-msg" id="formSuccess"></p>
+    </div>
+
+    <div class="card">
+      <h1>👥 Usuarios por departamento</h1>
+      <p class="subtitle">Listado de emails asociados a cada unidad.</p>
+      <div id="usersLoading">Cargando...</div>
+      <table id="usersTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Departamento</th>
+            <th>Rol</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const buildingId = 'building-1';
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, { credentials: 'include', ...options });
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = 'login.html';
+        throw new Error('No autorizado');
+      }
+      return res;
+    }
+
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = 'login.html';
+    });
+
+    async function loadUnits() {
+      const res = await fetch(`/units?building_id=${buildingId}`);
+      if (!res.ok) return;
+      const units = await res.json();
+      const sel = document.getElementById('unit_id');
+      sel.innerHTML = '<option value="">Elegir departamento</option>' +
+        units.map(u => `<option value="${u.id}">${u.number}${u.name ? ' - ' + u.name : ''}</option>`).join('');
+    }
+
+    async function loadUsers() {
+      const res = await api('/admin/users');
+      if (!res.ok) {
+        document.getElementById('usersLoading').textContent = 'Error al cargar usuarios.';
+        return;
+      }
+      const users = await res.json();
+      document.getElementById('usersLoading').style.display = 'none';
+      document.getElementById('usersTable').style.display = 'table';
+      const tbody = document.getElementById('usersBody');
+      const unitLabels = {};
+      const unitsRes = await fetch(`/units?building_id=${buildingId}`);
+      if (unitsRes.ok) {
+        const units = await unitsRes.json();
+        units.forEach(u => { unitLabels[u.id] = u.number; });
+      }
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td>${u.email}</td>
+          <td>${unitLabels[u.unit_id] || u.unit_id || '—'}</td>
+          <td>${u.is_admin ? '<span class="badge">Admin</span>' : 'Propietario'}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formError = document.getElementById('formError');
+      const formSuccess = document.getElementById('formSuccess');
+      formError.textContent = '';
+      formSuccess.textContent = '';
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      try {
+        const res = await api('/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password').value,
+            unit_id: document.getElementById('unit_id').value
+          })
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          formError.textContent = text || 'Error al crear el usuario';
+          btn.disabled = false;
+          return;
+        }
+        formSuccess.textContent = 'Usuario creado. Puede iniciar sesión y cambiar la contraseña.';
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+        loadUsers();
+        btn.disabled = false;
+      } catch (err) {
+        btn.disabled = false;
+      }
+    });
+
+    loadUnits();
+    loadUsers();
+  </script>
+</body>
+</html>
