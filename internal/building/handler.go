@@ -52,9 +52,10 @@ func (h *Handler) ListUnits(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Si occupied=true, filtrar solo unidades con al menos un usuario registrado.
+	// Si no hay ningún dueño registrado, se devuelve lista vacía.
 	if r.URL.Query().Get("occupied") == "true" && h.userRepo != nil {
 		occupied, err := h.userRepo.ListOccupiedUnitIDs(r.Context())
-		if err == nil && len(occupied) > 0 {
+		if err == nil {
 			set := make(map[string]bool, len(occupied))
 			for _, uid := range occupied {
 				set[uid] = true
