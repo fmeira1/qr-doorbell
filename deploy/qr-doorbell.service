@@ -1,0 +1,37 @@
+[Unit]
+Description=QR Doorbell - Timbre por QR con chat en tiempo real
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+# Ajustá el usuario al que usás en tu VPS
+User=deploy
+Group=deploy
+
+# Directorio donde está el binario y la carpeta web/
+WorkingDirectory=/opt/qr-doorbell
+
+# Binario compilado
+ExecStart=/opt/qr-doorbell/qr-doorbell
+
+# Variables de entorno desde archivo seguro (permisos 600)
+EnvironmentFile=/etc/qr-doorbell/env
+
+# Reiniciar automáticamente si se cae
+Restart=always
+RestartSec=5
+
+# Limitar recursos (opcional, ajustar según necesidad)
+LimitNOFILE=65536
+
+# Seguridad: no permitir escalación de privilegios
+NoNewPrivileges=true
+
+# Logs van a journald (ver con: journalctl -u qr-doorbell)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=qr-doorbell
+
+[Install]
+WantedBy=multi-user.target

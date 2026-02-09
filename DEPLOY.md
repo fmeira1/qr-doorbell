@@ -87,79 +87,83 @@ CREATE INDEX idx_users_unit_id ON users(unit_id);
 
 Salir: `\q`
 
-## Paso 2: Compilar y Subir el Binario
+## Paso 2: Setup automático (recomendado)
+
+El proyecto incluye scripts en la carpeta `deploy/` que automatizan la configuración:
+
+```bash
+# En el VPS, cloná el repo o copiá la carpeta deploy/
+sudo bash deploy/setup.sh
+```
+
+Esto crea:
+- Usuario de sistema `deploy` (sin shell de login)
+- Directorio `/opt/qr-doorbell/` para el binario y archivos web
+- Directorio `/etc/qr-doorbell/` con el archivo de variables de entorno
+- Servicio systemd habilitado (pero no arrancado)
+
+### Configurar variables de entorno
+
+```bash
+sudo nano /etc/qr-doorbell/env
+```
+
+Editá con tus valores reales. El archivo de ejemplo (`deploy/env.example`) tiene todas las variables documentadas:
+
+- `PORT`, `BASE_URL` — puerto y URL pública
+- `DATABASE_URL` — conexión a Postgres
+- `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` — autenticación
+- `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID` — notificaciones (opcional)
+- `DOORBELL_LAT`, `DOORBELL_LON`, `GEOFENCE_RADIUS_METERS` — geovalla (opcional)
+
+> El archivo tiene permisos `600` (solo root puede leerlo) para proteger las credenciales.
+
+## Paso 3: Compilar y desplegar
+
+### Opción A: Deploy desde tu máquina local (recomendado)
+
+```bash
+./deploy/deploy.sh root@tu-vps-ip
+```
+
+Esto compila para Linux, sube el binario + archivos web por scp y reinicia el servicio.
+
+### Opción B: Manual
 
 En tu máquina local:
 
 ```bash
-# Compilar para Linux
-GOOS=linux GOARCH=amd64 go build -o qr-doorbell ./cmd/server
-
-# Subir al servidor (reemplaza con tu IP/usuario)
-scp qr-doorbell usuario@tu-vps:/home/usuario/
-scp -r web usuario@tu-vps:/home/usuario/qr-doorbell-web/
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o qr-doorbell ./cmd/server
+scp qr-doorbell usuario@tu-vps:/opt/qr-doorbell/
+scp -r web/public usuario@tu-vps:/opt/qr-doorbell/web/public
 ```
 
-O clonar el repo directamente en el servidor:
+En el VPS:
 
 ```bash
-git clone tu-repo-url
-cd qr-doorbell
-go build -o qr-doorbell ./cmd/server
+sudo systemctl restart qr-doorbell
 ```
 
-## Paso 3: Configurar Variables de Entorno
-
-Crear archivo de entorno:
+## Paso 4: Verificar servicio systemd
 
 ```bash
-sudo nano /etc/qr-doorbell.env
-```
-
-Contenido:
-
-```bash
-PORT=8081
-BASE_URL=https://timbre.tudominio.com
-DATABASE_URL=postgres://qrdoorbell_user:tu_password_seguro@localhost:5432/qrdoorbell?sslmode=disable
-TELEGRAM_TOKEN=tu_token_de_telegram
-TELEGRAM_CHAT_ID=tu_chat_id
-```
-
-## Paso 4: Crear Servicio systemd
-
-```bash
-sudo nano /etc/systemd/system/qr-doorbell.service
-```
-
-Contenido:
-
-```ini
-[Unit]
-Description=QR Doorbell Service
-After=network.target postgresql.service
-
-[Service]
-Type=simple
-User=tu_usuario
-WorkingDirectory=/home/tu_usuario/qr-doorbell
-EnvironmentFile=/etc/qr-doorbell.env
-ExecStart=/home/tu_usuario/qr-doorbell/qr-doorbell
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Activar y arrancar:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable qr-doorbell
-sudo systemctl start qr-doorbell
+# Estado
 sudo systemctl status qr-doorbell
+
+# Logs en tiempo real
+sudo journalctl -u qr-doorbell -f
+
+# Arrancar / parar / reiniciar
+sudo systemctl start qr-doorbell
+sudo systemctl stop qr-doorbell
+sudo systemctl restart qr-doorbell
 ```
+
+El servicio systemd (`deploy/qr-doorbell.service`) incluye:
+- **Restart automático** (`Restart=always`, espera 5s entre intentos)
+- **Seguridad** (`NoNewPrivileges=true`, usuario sin privilegios)
+- **Logs centralizados** vía journald
+- **Arranque con el sistema** (`WantedBy=multi-user.target`)
 
 ## Paso 5: Configurar Nginx como Reverse Proxy
 
@@ -267,10 +271,16 @@ sudo systemctl restart qr-doorbell
 ```
 
 ### Actualizar aplicación
+
+Desde tu máquina local:
 ```bash
-cd /home/tu_usuario/qr-doorbell
-git pull
-go build -o qr-doorbell ./cmd/server
+./deploy/deploy.sh root@tu-vps-ip
+```
+
+O manualmente en el VPS:
+```bash
+cd /opt/qr-doorbell
+# Subí el nuevo binario y archivos web, luego:
 sudo systemctl restart qr-doorbell
 ```
 
