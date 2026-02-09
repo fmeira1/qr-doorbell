@@ -104,7 +104,7 @@ func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 
 	//handlers y llamadas
 	doorbellHandler := doorbell.NewHandler(doorbellService)
-	buildingHandler := building.NewHandler(buildingService)
+	buildingHandler := building.NewHandler(buildingService, userRepo)
 	sessionHandler := session.NewHandler(sessionService, cfg)
 	messageHandler := message.NewHandler(messageService)
 

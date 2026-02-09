@@ -114,7 +114,7 @@
 
     async function loadUnits() {
       try {
-        const res = await fetch(`/units?building_id=${buildingId}`);
+        const res = await fetch(`/units?building_id=${buildingId}&occupied=true`);
         if (!res.ok) {
           throw new Error('No se pudieron cargar los departamentos');
         }
