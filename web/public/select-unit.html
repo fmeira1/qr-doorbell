@@ -87,7 +87,14 @@
       margin-bottom: 20px;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
-      display: none;
+
+    .empty-msg {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted);
+      padding: 32px 16px;
+      font-size: 1rem;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -125,7 +132,7 @@
         grid.classList.remove('hidden');
 
         if (units.length === 0) {
-          grid.innerHTML = '<div class="error">No hay departamentos disponibles</div>';
+          grid.innerHTML = '<div class="empty-msg">No hay departamentos<br>disponibles en este momento</div>';
           return;
         }
 
