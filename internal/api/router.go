@@ -133,5 +133,11 @@ func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 	fs := http.FileServer(http.Dir(staticDir))
 	mux.Handle("/", fs)
 
-	return mux
+	// Middlewares globales: recovery (atrapa panics) + logging (loguea requests).
+	// Se aplican en orden inverso: logging corre primero, recovery envuelve todo.
+	var handler http.Handler = mux
+	handler = LoggingMiddleware(handler)
+	handler = RecoveryMiddleware(handler)
+
+	return handler
 }
