@@ -120,15 +120,30 @@
     const buildingId = new URLSearchParams(window.location.search).get('building_id') || 'building-1';
 
     async function loadUnits() {
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const grid = document.getElementById('units-grid');
+
       try {
-        const res = await fetch(`/units?building_id=${buildingId}&occupied=true`);
+        // 1. Validar que el doorbell_id existe
+        const dbRes = await fetch(`/doorbell/${doorbellId}`);
+        if (!dbRes.ok) {
+          loadingEl.classList.add('hidden');
+          errorEl.textContent = 'Timbre no encontrado. Verificá el código QR.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        const doorbell = await dbRes.json();
+        const resolvedBuildingId = doorbell.building_id || buildingId;
+
+        // 2. Cargar departamentos con dueño registrado
+        const res = await fetch(`/units?building_id=${resolvedBuildingId}&occupied=true`);
         if (!res.ok) {
           throw new Error('No se pudieron cargar los departamentos');
         }
         const units = await res.json();
         
-        document.getElementById('loading').classList.add('hidden');
-        const grid = document.getElementById('units-grid');
+        loadingEl.classList.add('hidden');
         grid.classList.remove('hidden');
 
         if (units.length === 0) {
@@ -143,9 +158,9 @@
           </button>
         `).join('');
       } catch (e) {
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('error').textContent = 'Error al cargar departamentos. Intentá de nuevo.';
-        document.getElementById('error').classList.remove('hidden');
+        loadingEl.classList.add('hidden');
+        errorEl.textContent = 'Error al cargar departamentos. Intentá de nuevo.';
+        errorEl.classList.remove('hidden');
       }
     }
 
