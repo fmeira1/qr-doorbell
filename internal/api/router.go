@@ -121,6 +121,7 @@ func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 	messageHandler := message.NewHandler(messageService)
 
 	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/doorbell-id", doorbellHandler.GetActiveID)
 	mux.HandleFunc("/doorbell/", doorbellHandler.GetDoorbell)
 	mux.HandleFunc("/building/", buildingHandler.GetBuilding)
 	mux.HandleFunc("/unit/", buildingHandler.GetUnit)

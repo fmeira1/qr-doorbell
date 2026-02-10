@@ -76,14 +76,36 @@ function getParamsFromURL() {
   };
 }
 
-// Si no hay unit_id, redirigir a selección
-function checkUnitSelection() {
+// Si no hay unit_id ni session_id, intentar resolver como propietario logueado.
+// Si no está logueado, redirigir a select-unit.
+async function checkUnitSelection() {
   const params = getParamsFromURL();
-  if (!params.sessionId && !params.unitId) {
+  if (params.sessionId || params.unitId) return true;
+
+  // Intentar obtener info del usuario logueado
+  try {
+    const meRes = await fetch('/auth/me', { credentials: 'include' });
+    if (meRes.ok) {
+      const user = await meRes.json();
+      if (user.unit_id) {
+        // Obtener el doorbell_id activo
+        const dbRes = await fetch('/doorbell-id');
+        const dbData = dbRes.ok ? await dbRes.json() : {};
+        const dbId = dbData.doorbell_id || '';
+        // Redirigir con los datos del propietario
+        window.location.href = `index.html?doorbell_id=${dbId}&unit_id=${user.unit_id}&role=owner`;
+        return false;
+      }
+    }
+  } catch (e) { /* no logueado */ }
+
+  // Visitante: necesita doorbell_id para ir a select-unit
+  if (params.doorbellId) {
     window.location.href = `select-unit.html?doorbell_id=${params.doorbellId}`;
-    return false;
+  } else {
+    window.location.href = 'select-unit.html';
   }
-  return true;
+  return false;
 }
 
 async function loadHistory(id) {
@@ -227,33 +249,34 @@ async function handleSend() {
 }
 
 // --- INICIO ---
-if (!checkUnitSelection()) {
-  // Redirigido a select-unit.html, salir
-  // (checkUnitSelection ya hace window.location.href)
-}
+(async () => {
+  const canContinue = await checkUnitSelection();
+  if (!canContinue) return; // Redirigido, salir
 
-const params = getParamsFromURL();
-sessionId = params.sessionId;
-unitId = params.unitId;
-unitNumber = params.unitNumber ? decodeURIComponent(params.unitNumber) : null;
-doorbellId = params.doorbellId;
+  const params = getParamsFromURL();
+  sessionId = params.sessionId;
+  unitId = params.unitId;
+  unitNumber = params.unitNumber ? decodeURIComponent(params.unitNumber) : null;
+  doorbellId = params.doorbellId;
 
-if (sessionId) {
-  setSession(sessionId);
-  setOwnerUI();
+  const isOwnerRole = new URLSearchParams(window.location.search).get('role') === 'owner';
 
-  (async () => {
+  if (sessionId) {
+    setSession(sessionId);
+    setOwnerUI();
     await loadHistory(sessionId);
     connectWS(sessionId);
-  })();
-} else {
-  setVisitorUI();
-  
-  // Si no hay unit_id, redirigir
-  if (!unitId) {
-    window.location.href = `select-unit.html?doorbell_id=${doorbellId}`;
+  } else if (isOwnerRole) {
+    // Propietario logueado esperando mensajes de visitantes
+    setOwnerUI();
+    hintText.textContent = 'Esperando que un visitante toque el timbre de tu departamento.';
+  } else {
+    setVisitorUI();
+    if (!unitId && doorbellId) {
+      window.location.href = `select-unit.html?doorbell_id=${doorbellId}`;
+    }
   }
-}
+})();
 
 // --- VISITANTE: crear sesión (con ubicación para geovalla si está activa) ---
 function getVisitorPosition() {

@@ -14,6 +14,13 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// GetActiveID devuelve el doorbell_id activo (endpoint público).
+func (h *Handler) GetActiveID(w http.ResponseWriter, r *http.Request) {
+	id := h.service.GetDoorbellID()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"doorbell_id": id})
+}
+
 func (h *Handler) GetDoorbell(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/doorbell/")
 
