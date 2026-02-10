@@ -1,8 +1,10 @@
 package api
 
 import (
+	"bufio"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"runtime/debug"
 )
@@ -61,4 +63,14 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 		rw.wroteHeader = true
 	}
 	return rw.ResponseWriter.Write(b)
+}
+
+// Hijack implementa http.Hijacker para que WebSocket upgrades funcionen
+// a través del LoggingMiddleware.
+func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := rw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("el ResponseWriter subyacente no soporta Hijack")
+	}
+	return h.Hijack()
 }
