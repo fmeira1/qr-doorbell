@@ -47,6 +47,8 @@ type UserRepository interface {
 	UpdatePassword(ctx context.Context, userID, passwordHash string) error
 	// EnsureAdmin crea o actualiza un usuario admin por email (bootstrap desde env).
 	EnsureAdmin(ctx context.Context, email, passwordHash string) error
+	// ListOccupiedUnitIDs devuelve los unit_id que tienen al menos un usuario (no admin).
+	ListOccupiedUnitIDs(ctx context.Context) ([]string, error)
 }
 
 // MessageRepository define las operaciones de persistencia de mensajes.
@@ -207,6 +209,25 @@ func (r *PostgresUserRepository) List(ctx context.Context) ([]User, error) {
 func (r *PostgresUserRepository) UpdatePassword(ctx context.Context, userID, passwordHash string) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE users SET password_hash = $1 WHERE id = $2`, passwordHash, userID)
 	return err
+}
+
+func (r *PostgresUserRepository) ListOccupiedUnitIDs(ctx context.Context) ([]string, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT DISTINCT unit_id FROM users WHERE unit_id != '' AND is_admin = false
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var uid string
+		if err := rows.Scan(&uid); err != nil {
+			return nil, err
+		}
+		out = append(out, uid)
+	}
+	return out, rows.Err()
 }
 
 func (r *PostgresUserRepository) EnsureAdmin(ctx context.Context, email, passwordHash string) error {

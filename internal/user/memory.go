@@ -73,6 +73,20 @@ func (r *MemoryRepository) UpdatePassword(ctx context.Context, userID, passwordH
 	return nil
 }
 
+func (r *MemoryRepository) ListOccupiedUnitIDs(ctx context.Context) ([]string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	seen := make(map[string]bool)
+	var out []string
+	for _, u := range r.byID {
+		if u.UnitID != "" && !u.IsAdmin && !seen[u.UnitID] {
+			seen[u.UnitID] = true
+			out = append(out, u.UnitID)
+		}
+	}
+	return out, nil
+}
+
 // EnsureAdmin crea o actualiza el usuario admin desde email/password (para bootstrap).
 func (r *MemoryRepository) EnsureAdmin(ctx context.Context, email, passwordHash string) error {
 	r.mu.Lock()
