@@ -6,17 +6,28 @@ type Service struct {
 	data map[string]Doorbell
 }
 
-func NewService() *Service {
+func NewService(doorbellID string) *Service {
+	if doorbellID == "" {
+		doorbellID = "abc123"
+	}
 	return &Service{
 		data: map[string]Doorbell{
-			"abc123": {
-				ID:         "abc123",
+			doorbellID: {
+				ID:         doorbellID,
 				BuildingID: "building-1",
 				Name:       "Puerta Principal",
 				Active:     true,
 			},
 		},
 	}
+}
+
+// GetDoorbellID devuelve el ID del timbre activo (solo hay uno).
+func (s *Service) GetDoorbellID() string {
+	for id := range s.data {
+		return id
+	}
+	return ""
 }
 
 func (s *Service) GetByID(id string) (Doorbell, error) {

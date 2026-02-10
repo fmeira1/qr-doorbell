@@ -38,6 +38,9 @@ type AppConfig struct {
 	AdminEmail    string
 	AdminPassword string
 
+	// DoorbellID es el identificador del timbre (por defecto "abc123").
+	DoorbellID string
+
 	// Geovalla: si GeofenceRadiusMeters > 0 y las coordenadas están definidas,
 	// al tocar el timbre se exige que el visitante esté dentro del radio.
 	DoorbellLat          float64 // DOORBELL_LAT (ej. -34.6037)
@@ -53,6 +56,7 @@ type AppConfig struct {
 //   - BASE_URL           (opcional, por defecto "http://localhost:8081")
 //   - TELEGRAM_TOKEN     (opcional, si está vacío no se enviarán notificaciones)
 //   - TELEGRAM_CHAT_ID   (opcional, si está vacío no se enviarán notificaciones)
+//   - DOORBELL_ID        (opcional, por defecto "abc123")
 //   - DOORBELL_LAT       (opcional, latitud del timbre para geovalla)
 //   - DOORBELL_LON       (opcional, longitud del timbre para geovalla)
 //   - GEOFENCE_RADIUS_METERS (opcional, radio en metros; si > 0 se exige estar dentro para tocar timbre)
@@ -69,6 +73,7 @@ func Load() (*AppConfig, error) {
 		JWTSecret:      os.Getenv("JWT_SECRET"),
 		AdminEmail:     os.Getenv("ADMIN_EMAIL"),
 		AdminPassword:  os.Getenv("ADMIN_PASSWORD"),
+		DoorbellID:     getenvDefault("DOORBELL_ID", "abc123"),
 	}
 	if v, err := strconv.ParseFloat(os.Getenv("DOORBELL_LAT"), 64); err == nil {
 		cfg.DoorbellLat = v

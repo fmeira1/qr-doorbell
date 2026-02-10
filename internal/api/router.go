@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -47,7 +48,7 @@ func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 	}
 
 	// Servicios
-	doorbellService := doorbell.NewService()
+	doorbellService := doorbell.NewService(cfg.DoorbellID)
 	buildingService := building.NewService()
 	sessionService := session.NewService(5*time.Minute, sessionRepo)
 	userService := user.NewService(userRepo)
@@ -70,6 +71,17 @@ func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 		mux.Handle("/auth/me", auth.RequireAuth(cfg.JWTSecret)(http.HandlerFunc(authHandler.Me)))
 		mux.Handle("/auth/change-password", auth.RequireAuth(cfg.JWTSecret)(http.HandlerFunc(authHandler.ChangePassword)))
 		mux.Handle("/admin/users", auth.RequireAdmin(cfg.JWTSecret)(http.HandlerFunc(adminHandler.Users)))
+
+		// Endpoint de configuración para el admin: devuelve doorbell_id y URL del timbre.
+		mux.Handle("/admin/config", auth.RequireAdmin(cfg.JWTSecret)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			doorbellID := doorbellService.GetDoorbellID()
+			data := map[string]string{
+				"doorbell_id": doorbellID,
+				"doorbell_url": fmt.Sprintf("%s/select-unit.html?doorbell_id=%s", cfg.BaseURL, doorbellID),
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(data)
+		})))
 	}
 
 	// Función helper para obtener info de sesión (unit) desde message service

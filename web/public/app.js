@@ -336,7 +336,38 @@ textInput.addEventListener("keydown", (e) => {
   }
 });
 
-// --- CERRAR SESIÓN ---
+// --- CERRAR SESIÓN (WS) ---
 closeBtn.onclick = () => {
   if (ws) ws.close();
 };
+
+// --- BARRA DE USUARIO AUTENTICADO ---
+(async () => {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (!res.ok) return;
+    const user = await res.json();
+    const bar = document.getElementById('user-bar');
+    const emailEl = document.getElementById('user-bar-email');
+    if (bar && emailEl) {
+      emailEl.textContent = user.email;
+      bar.style.display = 'flex';
+      // Si es admin, agregar enlace al panel
+      if (user.is_admin) {
+        const adminLink = document.createElement('a');
+        adminLink.href = 'admin.html';
+        adminLink.textContent = 'Panel admin';
+        adminLink.style.cssText = 'font-size:0.82rem; color:var(--accent); text-decoration:none;';
+        bar.querySelector('div').prepend(adminLink);
+      }
+    }
+    const logoutLink = document.getElementById('user-logout');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+        document.getElementById('user-bar').style.display = 'none';
+      });
+    }
+  } catch (e) { /* No logueado, no mostrar barra */ }
+})();

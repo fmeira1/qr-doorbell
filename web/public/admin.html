@@ -33,6 +33,19 @@
     </div>
 
     <div class="card">
+      <h1>🔗 Enlace del timbre (QR)</h1>
+      <p class="subtitle">Usá esta URL para generar el código QR que los visitantes van a escanear.</p>
+      <div class="form-group">
+        <label>URL del timbre</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="doorbellUrl" readonly style="flex:1; cursor: pointer; opacity: 0.85;" />
+          <button type="button" class="btn" id="copyUrlBtn" style="white-space: nowrap;">Copiar</button>
+        </div>
+      </div>
+      <p class="success-msg" id="copySuccess"></p>
+    </div>
+
+    <div class="card">
       <h1>➕ Agregar usuario por departamento</h1>
       <p class="subtitle">Anotá el email con una contraseña genérica; el dueño podrá cambiarla después.</p>
       <form id="addUserForm">
@@ -160,6 +173,30 @@
       }
     });
 
+    async function loadConfig() {
+      try {
+        const res = await api('/admin/config');
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('doorbellUrl').value = data.doorbell_url || '';
+      } catch (e) { /* silencioso */ }
+    }
+
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+      const input = document.getElementById('doorbellUrl');
+      const msg = document.getElementById('copySuccess');
+      navigator.clipboard.writeText(input.value).then(() => {
+        msg.textContent = 'URL copiada al portapapeles';
+        setTimeout(() => { msg.textContent = ''; }, 2500);
+      }).catch(() => {
+        input.select();
+        document.execCommand('copy');
+        msg.textContent = 'URL copiada';
+        setTimeout(() => { msg.textContent = ''; }, 2500);
+      });
+    });
+
+    loadConfig();
     loadUnits();
     loadUsers();
   </script>
