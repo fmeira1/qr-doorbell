@@ -7,6 +7,8 @@ import (
 	httpapp "qr-doorbell/internal/api"
 	"qr-doorbell/internal/config"
 	"qr-doorbell/internal/storage"
+
+	_ "github.com/lib/pq" // Driver Postgres para database/sql
 )
 
 func main() {
