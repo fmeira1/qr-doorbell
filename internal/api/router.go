@@ -26,7 +26,15 @@ import (
 
 func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 	mux := http.NewServeMux()
-	hub := realtime.NewHub()
+	// El sessionService se crea más adelante; usamos una variable para la closure.
+	var sessionService *session.Service
+	hub := realtime.NewHub(func(sessionID string) bool {
+		if sessionService == nil {
+			return false
+		}
+		_, found := sessionService.Get(sessionID)
+		return found
+	})
 
 	var msgRepo storage.MessageRepository
 	var sessionRepo storage.SessionRepository
@@ -50,7 +58,7 @@ func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 	// Servicios
 	doorbellService := doorbell.NewService(cfg.DoorbellID)
 	buildingService := building.NewService()
-	sessionService := session.NewService(5*time.Minute, sessionRepo)
+	sessionService = session.NewService(5*time.Minute, sessionRepo)
 	userService := user.NewService(userRepo)
 
 	// Bootstrap admin si están definidos ADMIN_EMAIL y ADMIN_PASSWORD
@@ -118,7 +126,7 @@ func NewRouter(cfg *config.AppConfig, db *storage.DB) http.Handler {
 	doorbellHandler := doorbell.NewHandler(doorbellService)
 	buildingHandler := building.NewHandler(buildingService, userRepo)
 	sessionHandler := session.NewHandler(sessionService, cfg)
-	messageHandler := message.NewHandler(messageService)
+	messageHandler := message.NewHandler(messageService, sessionService, cfg.JWTSecret)
 
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/doorbell-id", doorbellHandler.GetActiveID)

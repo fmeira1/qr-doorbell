@@ -45,7 +45,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	token, err := NewJWT(h.jwtSecret, u.ID, u.Email, u.IsAdmin)
+	token, err := NewJWT(h.jwtSecret, u.ID, u.Email, u.UnitID, u.IsAdmin)
 	if err != nil {
 		http.Error(w, "error generando sesión", http.StatusInternalServerError)
 		return

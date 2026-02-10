@@ -17,11 +17,12 @@ type Claims struct {
 	jwt.RegisteredClaims
 	UserID  string `json:"uid"`
 	Email   string `json:"email"`
+	UnitID  string `json:"unit_id,omitempty"`
 	IsAdmin bool   `json:"admin"`
 }
 
 // NewJWT genera un token para el usuario.
-func NewJWT(secret string, userID, email string, isAdmin bool) (string, error) {
+func NewJWT(secret string, userID, email, unitID string, isAdmin bool) (string, error) {
 	if secret == "" {
 		return "", ErrNoSecret
 	}
@@ -34,6 +35,7 @@ func NewJWT(secret string, userID, email string, isAdmin bool) (string, error) {
 		},
 		UserID:  userID,
 		Email:   email,
+		UnitID:  unitID,
 		IsAdmin: isAdmin,
 	}
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

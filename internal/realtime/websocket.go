@@ -8,15 +8,20 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// SessionChecker es una función que valida si una sesión existe y no expiró.
+type SessionChecker func(sessionID string) bool
+
 type Hub struct {
-	mu       sync.Mutex
-	clients  map[string]map[*websocket.Conn]bool
-	upgrader websocket.Upgrader
+	mu             sync.Mutex
+	clients        map[string]map[*websocket.Conn]bool
+	upgrader       websocket.Upgrader
+	sessionChecker SessionChecker
 }
 
-func NewHub() *Hub {
+func NewHub(sessionChecker SessionChecker) *Hub {
 	return &Hub{
-		clients: make(map[string]map[*websocket.Conn]bool),
+		clients:        make(map[string]map[*websocket.Conn]bool),
+		sessionChecker: sessionChecker,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
@@ -26,6 +31,17 @@ func NewHub() *Hub {
 }
 
 func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request, sessionID string) {
+	if sessionID == "" {
+		http.Error(w, "session_id requerido", http.StatusBadRequest)
+		return
+	}
+
+	// Validar que la sesión existe antes de aceptar la conexión WebSocket
+	if h.sessionChecker != nil && !h.sessionChecker(sessionID) {
+		http.Error(w, "sesión no encontrada o expirada", http.StatusNotFound)
+		return
+	}
+
 	log.Println("INTENTANDO WS para sesión:", sessionID)
 
 	conn, err := h.upgrader.Upgrade(w, r, nil)
