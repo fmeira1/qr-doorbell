@@ -87,6 +87,17 @@ func (r *MemoryRepository) ListOccupiedUnitIDs(ctx context.Context) ([]string, e
 	return out, nil
 }
 
+func (r *MemoryRepository) Delete(ctx context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	u, ok := r.byID[id]
+	if ok {
+		delete(r.byEmail, u.Email)
+		delete(r.byID, id)
+	}
+	return nil
+}
+
 // EnsureAdmin crea o actualiza el usuario admin desde email/password (para bootstrap).
 func (r *MemoryRepository) EnsureAdmin(ctx context.Context, email, passwordHash string) error {
 	r.mu.Lock()

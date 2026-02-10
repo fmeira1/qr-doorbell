@@ -21,6 +21,8 @@ func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
 		h.listUsers(w, r)
 	case http.MethodPost:
 		h.createUser(w, r)
+	case http.MethodDelete:
+		h.deleteUser(w, r)
 	default:
 		http.Error(w, "método no permitido", http.StatusMethodNotAllowed)
 	}
@@ -48,6 +50,24 @@ func (h *Handler) createUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(u)
+}
+
+func (h *Handler) deleteUser(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "falta el parámetro id", http.StatusBadRequest)
+		return
+	}
+	err := h.userService.Delete(r.Context(), id)
+	if err != nil {
+		if err == user.ErrUserNotFound {
+			http.Error(w, "usuario no encontrado", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) listUsers(w http.ResponseWriter, r *http.Request) {

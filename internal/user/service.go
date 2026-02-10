@@ -123,6 +123,21 @@ func (s *Service) List(ctx context.Context) ([]User, error) {
 	return out, nil
 }
 
+// Delete elimina un usuario por ID. No permite eliminar admins.
+func (s *Service) Delete(ctx context.Context, id string) error {
+	u, ok, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return ErrUserNotFound
+	}
+	if u.IsAdmin {
+		return errors.New("no se puede eliminar un administrador")
+	}
+	return s.repo.Delete(ctx, id)
+}
+
 // ChangePassword cambia la contraseña del usuario (verificando la actual).
 func (s *Service) ChangePassword(ctx context.Context, userID string, in ChangePasswordInput) error {
 	if in.NewPassword == "" || len(in.NewPassword) < 6 {

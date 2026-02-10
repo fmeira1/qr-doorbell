@@ -45,6 +45,8 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (User, bool, error)
 	List(ctx context.Context) ([]User, error)
 	UpdatePassword(ctx context.Context, userID, passwordHash string) error
+	// Delete elimina un usuario por ID.
+	Delete(ctx context.Context, id string) error
 	// EnsureAdmin crea o actualiza un usuario admin por email (bootstrap desde env).
 	EnsureAdmin(ctx context.Context, email, passwordHash string) error
 	// ListOccupiedUnitIDs devuelve los unit_id que tienen al menos un usuario (no admin).
@@ -228,6 +230,11 @@ func (r *PostgresUserRepository) ListOccupiedUnitIDs(ctx context.Context) ([]str
 		out = append(out, uid)
 	}
 	return out, rows.Err()
+}
+
+func (r *PostgresUserRepository) Delete(ctx context.Context, id string) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM users WHERE id = $1`, id)
+	return err
 }
 
 func (r *PostgresUserRepository) EnsureAdmin(ctx context.Context, email, passwordHash string) error {
