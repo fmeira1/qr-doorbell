@@ -389,7 +389,7 @@ closeBtn.onclick = () => {
       logoutLink.addEventListener('click', async (e) => {
         e.preventDefault();
         await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
-        document.getElementById('user-bar').style.display = 'none';
+        window.location.href = 'login.html';
       });
     }
   } catch (e) { /* No logueado, no mostrar barra */ }
