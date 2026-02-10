@@ -4,7 +4,7 @@ let role = "visitor"; // "visitor" | "owner"
 let messageCount = 0;
 let unitId = null;
 let unitNumber = null;
-let doorbellId = "abc123";
+let doorbellId = null;
 
 const messagesDiv = document.getElementById("messages");
 const startBtn = document.getElementById("start");
@@ -72,7 +72,7 @@ function getParamsFromURL() {
     sessionId: params.get("session_id"),
     unitId: params.get("unit_id"),
     unitNumber: params.get("unit_number"),
-    doorbellId: params.get("doorbell_id") || "abc123",
+    doorbellId: params.get("doorbell_id"),
   };
 }
 

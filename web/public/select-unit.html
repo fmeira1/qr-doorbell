@@ -116,13 +116,20 @@
   </div>
 
   <script>
-    const doorbellId = new URLSearchParams(window.location.search).get('doorbell_id') || 'abc123';
+    const doorbellId = new URLSearchParams(window.location.search).get('doorbell_id');
     const buildingId = new URLSearchParams(window.location.search).get('building_id') || 'building-1';
 
     async function loadUnits() {
       const loadingEl = document.getElementById('loading');
       const errorEl = document.getElementById('error');
       const grid = document.getElementById('units-grid');
+
+      if (!doorbellId) {
+        loadingEl.classList.add('hidden');
+        errorEl.textContent = 'Falta el código del timbre en la URL. Escaneá el QR.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
 
       try {
         // 1. Validar que el doorbell_id existe
