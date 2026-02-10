@@ -288,7 +288,7 @@ function getVisitorPosition() {
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
       () => resolve(null),
-      { timeout: 10000, maximumAge: 60000 }
+      { timeout: 5000, maximumAge: 120000 }
     );
   });
 }
@@ -300,16 +300,22 @@ startBtn.onclick = async () => {
   }
 
   hintText.classList.remove("error");
-  hintText.textContent = "Obteniendo ubicación…";
+  startBtn.disabled = true;
 
-  const position = await getVisitorPosition();
   const body = { doorbell_id: doorbellId, unit_id: unitId };
-  if (position) {
-    body.lat = position.lat;
-    body.lon = position.lon;
+
+  // Solo pedir ubicación si el backend la necesita (geovalla).
+  // Intentamos obtenerla rápido; si falla, dejamos que el backend decida.
+  if (navigator.geolocation) {
+    hintText.textContent = "Obteniendo ubicación…";
+    const position = await getVisitorPosition();
+    if (position) {
+      body.lat = position.lat;
+      body.lon = position.lon;
+    }
   }
 
-  hintText.textContent = "Seleccioná el departamento y tocá el timbre para comenzar a chatear.";
+  hintText.textContent = "Conectando…";
 
   try {
     const res = await fetch("/session/start", {
@@ -322,6 +328,7 @@ startBtn.onclick = async () => {
       const msg = await res.text();
       hintText.textContent = msg || "Error iniciando sesión";
       hintText.classList.add("error");
+      startBtn.disabled = false;
       return;
     }
 
@@ -330,6 +337,7 @@ startBtn.onclick = async () => {
     messageCount = 0;
     updateMessageCount();
     messagesDiv.innerHTML = "";
+    startBtn.disabled = false;
 
     addMessageBubble({
       sender: "system",
@@ -341,6 +349,7 @@ startBtn.onclick = async () => {
     console.error("Error al crear sesión:", e);
     hintText.textContent = "Error de conexión. Intentá de nuevo.";
     hintText.classList.add("error");
+    startBtn.disabled = false;
   }
 };
 
